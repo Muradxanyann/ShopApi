@@ -1,9 +1,9 @@
-﻿using Application.Dto.UserDto;
+using Application.Dto.UserDto;
 using Domain;
 
 namespace Application.Interfaces;
 
-public interface IUserRepository
+public interface IUserService
 {
     Task<IEnumerable<UserEntity?>> GetAllUsersAsync();
     Task<IEnumerable<UserResponseDto?>> GetAllUsersWithOrdersAsync();
@@ -12,4 +12,3 @@ public interface IUserRepository
     Task<int> UpdateUserAsync(int id, UserForUpdateDto user);
     Task<int> DeleteUserAsync(int id);
 }
-

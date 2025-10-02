@@ -1,5 +1,8 @@
 using Application;
+using Application.Interfaces;
+using Application.Services;
 using Infrastructure;
+using Infrastructure.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,10 +14,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+// ==Dependencies==
+builder.Services.AddSingleton<IConnectionFactory, NpgsqlConnectionFactory>();
+builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// To avoid repeatedly creating aliases
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
 var app = builder.Build();
 
-
+app.UseDeveloperExceptionPage();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

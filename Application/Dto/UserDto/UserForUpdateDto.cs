@@ -1,6 +1,6 @@
-namespace Application.UserDto;
+namespace Application.Dto.UserDto;
 
-public class UserForCreationDto
+public class UserForUpdateDto
 {
     public required string Name { get; set; } 
     public int Age { get; set; }   

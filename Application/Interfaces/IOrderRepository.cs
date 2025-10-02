@@ -1,6 +1,8 @@
-namespace Application;
+using Application.Dto.OrderDto;
 
-public class IOrderRepository
+namespace Application.Interfaces;
+
+public interface IOrderRepository
 {
-    
+    public Task<IEnumerable<OrderResponseDto?>> GetAllOrdersWithProductsAsync();
 }
