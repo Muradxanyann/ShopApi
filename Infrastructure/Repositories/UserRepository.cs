@@ -1,50 +1,58 @@
-﻿using Application;
-using Application.OrderDto;
-using Application.ProductDto;
-using Application.UserDto;
+﻿
+using Application.Dto.OrderDto;
+using Application.Dto.OrderProductsDto;
+
+using Application.Dto.UserDto;
+using Application.Interfaces;
 using Dapper;
 using Domain;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
+
 
 // ReSharper disable once CheckNamespace
 namespace Infrastructure;
 
 public class UserRepository : IUserRepository
 {
-    private readonly IConfiguration _configuration;
+    private readonly IConnectionFactory _connectionFactory;
     
-    public UserRepository(IConfiguration configuration)
+    public UserRepository(IConnectionFactory connectionFactory)
     {
-        _configuration = configuration; 
+        _connectionFactory = connectionFactory;
     }
     
     public async Task<IEnumerable<UserEntity?>> GetAllUsersAsync()
     {
-        await using var connection = GetConnection();
-        var users = 
-            await connection.QueryAsync<UserEntity>("SELECT user_id AS Id, name, age, phone, email FROM users " +
-                                               "ORDER BY Id ASC");
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+        const string sql = """
+                                SELECT user_id, name, age, phone, email FROM users
+                                ORDER BY user_id ASC
+                           """;
+        
+        var users = await connection.QueryAsync<UserEntity>(sql);
         return users.ToList();
     }
 
     public async Task<IEnumerable<UserResponseDto?>> GetAllUsersWithOrdersAsync()
     {
-        await using var connection = GetConnection();
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
         const string sql = """
 
-                                   SELECT u.user_id AS UserId, u.name AS Name, u.age AS Age, u.email AS Email,
-                                          o.order_id AS OrderId, o.quantity AS Quantity, o.created_at AS CreatedAt,
-                                          p.product_id AS ProductId, p.name AS Name, p.category AS Category, p.price AS Price
+                                   SELECT u.user_id, u.name, u.age, u.email,
+                                          o.order_id, o.created_at,
+                                          po.product_id, po.quantity,
+                                          p.name, p.category, p.price
                                    FROM users AS u
                                    JOIN orders AS o ON u.user_id = o.user_id
-                                   JOIN products AS p ON o.product_id = p.product_id
+                                   JOIN order_products AS po ON o.order_id = po.order_id
+                                   JOIN products AS p ON po.product_id = p.product_id
                                    ORDER BY u.user_id, o.order_id
                            """;
         var userDictionary = new Dictionary<int, UserResponseDto>();
-        var result = await connection.QueryAsync<UserResponseDto, OrderResponseDto, ProductResponseDto, UserResponseDto>(
+        var result = await connection.QueryAsync<UserResponseDto, OrderResponseDto, OrderProductsDto, UserResponseDto>(
             sql,
-            (user, order, product) =>
+            (user, order, productInfo) =>
             {
                 //for user
                 if (!userDictionary.TryGetValue(user.UserId, out var currentUser))
@@ -63,15 +71,15 @@ public class UserRepository : IUserRepository
                 if (currentOrder == null)
                 {
                     currentOrder = order;
-                    currentOrder.Products = new List<ProductResponseDto>();
+                    currentOrder.Products = new List<OrderProductsDto>();
                     currentUser.Orders!.Add(currentOrder);
                 }
                 
-                currentOrder.Products.Add(product);
+                currentOrder.Products.Add(productInfo);
 
                 return currentUser;
             },
-            splitOn: "OrderId,ProductId"
+            splitOn: "order_id,product_id"
         );
 
         return userDictionary.Values.ToList();
@@ -80,16 +88,18 @@ public class UserRepository : IUserRepository
 
     public async Task<UserEntity?> GetUserByIdAsync(int id)
     {
-        await using var connection = GetConnection();
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
         var user = await 
-            connection.QueryAsync<UserEntity>("SELECT user_id AS Id, name, age, phone, email" + 
+            connection.QueryAsync<UserEntity>("SELECT user_id, name, age, phone, email" + 
                                          " FROM users WHERE user_id = @id", new { id });
         return  user.FirstOrDefault();
     }
 
     public async Task<int> CreateUserAsync(UserForCreationDto user)
     {
-        await using var connection = GetConnection();
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
         const string sql = """
                                INSERT INTO users (name, age, phone, email)
                                VALUES (@Name, @Age, @Phone, @Email)
@@ -101,7 +111,8 @@ public class UserRepository : IUserRepository
 
     public async Task<int> UpdateUserAsync(int id, UserForUpdateDto user)
     {
-        await using var connection = GetConnection();
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
         const string sql = "UPDATE users SET name = @Name, age = @Age, phone = @Phone, email = @Email " +
                            "WHERE user_id = @Id";
         return await connection.ExecuteAsync(sql, new
@@ -116,12 +127,9 @@ public class UserRepository : IUserRepository
 
     public async Task<int> DeleteUserAsync(int id)
     {
-        await using var connection = GetConnection();
-        const string sql = "DELETE FROM users WHERE user_id = @id";
-        return await connection.ExecuteAsync(sql, new {id});
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+        return await connection.ExecuteAsync("DELETE FROM users WHERE user_id = @id", new {id});
     }
-    private NpgsqlConnection GetConnection()
-    {
-        return new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection"));
-    }
+    
 }
