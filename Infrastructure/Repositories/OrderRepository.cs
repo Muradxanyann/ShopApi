@@ -1,7 +1,4 @@
 using System.Data;
-using Application;
-using Application.Dto.OrderDto;
-using Application.Dto.OrderProductsDto;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Dapper;
@@ -25,50 +22,25 @@ public class OrderRepository :  IOrderRepository
         return await connection.QueryAsync<OrderEntity>(sql);
     }
 
-    public async Task<IEnumerable<OrderEntity?>> GetAllOrdersWithProductsAsync()
+    public async Task<IEnumerable<OrderEntity>> GetAllOrdersWithProductsAsync()
     {
         using var connection = _connectionFactory.CreateConnection();
 
         const string sql = """
-                           SELECT o.order_id, o.user_id, o.created_at,
-                           	  po.product_id, po.quantity, 
-                           	  p.name, p.category, p.price
+                           SELECT 
+                               o.order_id, o.user_id, o.created_at,
+                               po.order_id, po.product_id, po.quantity,
+                               p.product_id, p.name, p.category, p.price
                            FROM orders o
-                           LEFT JOIN order_products po ON po.order_id = o.order_id
+                           LEFT JOIN order_products po ON o.order_id = po.order_id
                            LEFT JOIN products p ON po.product_id = p.product_id
                            """;
-        var result = await connection.QueryAsync<OrderEntity, ProductOrderEntity, OrderEntity>(
-            sql,
-            (order, product) =>
-            {
-                order.Items?.Add(product);
-                return order;
-            },
-            splitOn: "product_id"
-        );
-        return result;
-    }
-    
-    public async Task<OrderEntity?> GetOrderWithProductsAsync(int id)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-
-        // 1. Убрали p.product_id из SELECT
-        var sql = """
-                  SELECT  o.order_id, o.user_id, o.created_at,
-                          po.product_id, po.quantity,
-                          p.name, p.category, p.price
-                  FROM orders o 
-                  LEFT JOIN order_products po ON po.order_id = o.order_id
-                  LEFT JOIN products p ON p.product_id = po.product_id
-                  WHERE o.order_id = @Id
-                  """;
 
         var orderDictionary = new Dictionary<int, OrderEntity>();
 
         var result = await connection.QueryAsync<OrderEntity, ProductOrderEntity, ProductEntity, OrderEntity>(
             sql,
-            (order, orderProduct, product) =>
+            (order, productOrder, product) =>
             {
                 if (!orderDictionary.TryGetValue(order.OrderId, out var currentOrder))
                 {
@@ -76,21 +48,60 @@ public class OrderRepository :  IOrderRepository
                     currentOrder.Items = new List<ProductOrderEntity>();
                     orderDictionary.Add(currentOrder.OrderId, currentOrder);
                 }
-            
-                // Важно: Проверяем, что связанные сущности не null
-                // Dapper может вернуть null для LEFT JOIN, если нет совпадений
-                if (orderProduct != null && product != null)
+
+                if (productOrder != null && productOrder.ProductId != 0)
                 {
-                    orderProduct.Product = product;
-                    // Также Dapper сам заполнит orderProduct.ProductId и product.ProductId из одного столбца po.product_id
-                    currentOrder.Items!.Add(orderProduct);
+                    productOrder.Product = product; 
+                    currentOrder.Items.Add(productOrder);
                 }
 
                 return currentOrder;
             },
-            new { Id = id },
-            // 2. Изменили splitOn на имена первых столбцов второй и третьей сущности
-            splitOn: "product_id,name"
+            splitOn: "order_id,product_id"
+        );
+
+        return orderDictionary.Values;
+    }
+    
+    public async Task<OrderEntity?> GetOrderWithProductsAsync(int id)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+       
+        var sql = """
+                  SELECT 
+                      o.order_id, o.user_id, o.created_at,
+                      po.order_id, po.product_id, po.quantity,
+                      p.product_id, p.name, p.category, p.price
+                  FROM orders o
+                  LEFT JOIN order_products po ON o.order_id = po.order_id
+                  LEFT JOIN products p ON po.product_id = p.product_id
+                  WHERE o.order_id = @Id
+                  """;
+
+        var orderDictionary = new Dictionary<int, OrderEntity>();
+
+        var result = await connection.QueryAsync<OrderEntity, ProductOrderEntity, ProductEntity, OrderEntity>(
+            sql,
+            (order, productOrder, product) =>
+            {
+                if (!orderDictionary.TryGetValue(order.OrderId, out var currentOrder))
+                {
+                    currentOrder = order;
+                    currentOrder.Items = new List<ProductOrderEntity>();
+                    orderDictionary.Add(currentOrder.OrderId, currentOrder);
+                }
+
+                if (productOrder != null && productOrder.ProductId != 0)
+                {
+                    productOrder.Product = product; 
+                    currentOrder.Items.Add(productOrder);
+                }
+
+                return currentOrder;
+            },
+            new{Id = id},
+            splitOn: "order_id,product_id"
         );
 
         return orderDictionary.Values.FirstOrDefault();

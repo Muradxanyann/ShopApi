@@ -10,6 +10,6 @@ public class OrderEntity
     public int UserId { get; set; }
     public UserEntity? User { get; set; }
     
-    public ICollection<ProductOrderEntity>? Items { get; set; } =  new List<ProductOrderEntity>();
+    public ICollection<ProductOrderEntity> Items { get; set; } =  new List<ProductOrderEntity>();
     
 }

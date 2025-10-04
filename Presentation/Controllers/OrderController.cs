@@ -31,7 +31,6 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> GetOrderById(int id)
     {
         var order =  await _orderService.GetOrderWithProductsAsync(id);
-        Console.WriteLine(order.Products.Count);
         if (order == null)
             return NotFound("Order not found");
         return Ok(order);
