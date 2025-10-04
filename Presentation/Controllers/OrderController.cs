@@ -1,25 +1,47 @@
 using Application;
+using Application.Dto.OrderDto;
 using Application.Interfaces;
+using Application.Interfaces.Services;
+using Domain;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ShopApi.Controllers;
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Orders")]
 public class OrderController : ControllerBase
 {
-    private readonly IOrderRepository _orderRepository;
+    private readonly IOrderService _orderService;
 
-    public OrderController(IOrderRepository orderRepository)
+    public OrderController(IOrderService orderService)
     {
-        _orderRepository = orderRepository;
+        _orderService = orderService;
     }
 
     [HttpGet]
+    
     public async Task<IActionResult> GetOrdersWithProductsAsync()
     {
-        var orders = await _orderRepository.GetAllOrdersWithProductsAsync();
+        var orders = await _orderService.GetAllOrdersWithProductsAsync();
         if (!orders.Any())
             return NotFound("No orders found");
         return Ok(orders);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetOrderById(int id)
+    {
+        var order =  await _orderService.GetOrderWithProductsAsync(id);
+        Console.WriteLine(order.Products.Count);
+        if (order == null)
+            return NotFound("Order not found");
+        return Ok(order);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateOrderAsync(OrderCreationDto order)
+    {
+        var orderId = await _orderService.CreateOrderAsync(order);
+        
+        return CreatedAtAction(nameof(GetOrderById), new { id = orderId }, new { orderId });
     }
 }

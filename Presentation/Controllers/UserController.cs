@@ -1,11 +1,12 @@
 
 using Application.Dto.UserDto;
 using Application.Interfaces;
+using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ShopApi.Controllers;
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Users")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
@@ -44,7 +45,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateUser(UserForCreationDto user)
+    public async Task<IActionResult> CreateUser(UserCreationDto user)
     {
         var rowsAffected = await _service.CreateUserAsync(user);
         if (rowsAffected == 1)
@@ -54,7 +55,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(int id, UserForUpdateDto user)
+    public async Task<IActionResult> UpdateUser(int id, UserUpdateDto user)
     {
         var rowsAffected = await _service.UpdateUserAsync(id, user);
         if (rowsAffected == 1)

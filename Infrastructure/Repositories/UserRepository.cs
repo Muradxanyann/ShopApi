@@ -4,6 +4,7 @@ using Application.Dto.OrderProductsDto;
 
 using Application.Dto.UserDto;
 using Application.Interfaces;
+using Application.Interfaces.Repositories;
 using Dapper;
 using Domain;
 
@@ -33,7 +34,7 @@ public class UserRepository : IUserRepository
         return users.ToList();
     }
 
-    public async Task<IEnumerable<UserResponseDto?>> GetAllUsersWithOrdersAsync()
+    public async Task<IEnumerable<UserEntity?>> GetAllUsersWithOrdersAsync()
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
@@ -49,8 +50,8 @@ public class UserRepository : IUserRepository
                                    JOIN products AS p ON po.product_id = p.product_id
                                    ORDER BY u.user_id, o.order_id
                            """;
-        var userDictionary = new Dictionary<int, UserResponseDto>();
-        var result = await connection.QueryAsync<UserResponseDto, OrderResponseDto, OrderProductsDto, UserResponseDto>(
+        var userDictionary = new Dictionary<int, UserEntity>();
+        var result = await connection.QueryAsync<UserEntity, OrderEntity, ProductOrderEntity, UserEntity>(
             sql,
             (user, order, productInfo) =>
             {
@@ -58,7 +59,7 @@ public class UserRepository : IUserRepository
                 if (!userDictionary.TryGetValue(user.UserId, out var currentUser))
                 {
                     currentUser = user;
-                    currentUser.Orders = new List<OrderResponseDto>();
+                    currentUser.Orders = new List<OrderEntity>();
                     userDictionary.Add(currentUser.UserId, currentUser);
                 }
 
@@ -71,11 +72,11 @@ public class UserRepository : IUserRepository
                 if (currentOrder == null)
                 {
                     currentOrder = order;
-                    currentOrder.Products = new List<OrderProductsDto>();
+                    currentOrder.Items =  new List<ProductOrderEntity>();
                     currentUser.Orders!.Add(currentOrder);
                 }
                 
-                currentOrder.Products.Add(productInfo);
+                currentOrder.Items?.Add(productInfo);
 
                 return currentUser;
             },
@@ -96,7 +97,7 @@ public class UserRepository : IUserRepository
         return  user.FirstOrDefault();
     }
 
-    public async Task<int> CreateUserAsync(UserForCreationDto user)
+    public async Task<int> CreateUserAsync(UserEntity user)
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
@@ -109,7 +110,7 @@ public class UserRepository : IUserRepository
         
     }
 
-    public async Task<int> UpdateUserAsync(int id, UserForUpdateDto user)
+    public async Task<int> UpdateUserAsync(int id, UserEntity user)
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();

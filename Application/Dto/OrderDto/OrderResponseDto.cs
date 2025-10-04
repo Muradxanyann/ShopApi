@@ -1,10 +1,13 @@
+using Application.Dto.OrderProductsDto;
 using Application.Dto.ProductDto;
 
 namespace Application.Dto.OrderDto;
 
 public class OrderResponseDto
 {
-    public int OrderId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public ICollection<OrderProductsDto.OrderProductsDto> Products { get; set; } = new List<OrderProductsDto.OrderProductsDto>();
+    public int OrderId { get; init; }
+    
+    public DateTime CreatedAt { get; init; }
+    
+    public ICollection<OrderProductsInfo> Products { get; init; } = new List<OrderProductsInfo>();
 }
