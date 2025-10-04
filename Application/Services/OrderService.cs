@@ -21,13 +21,7 @@ public class OrderService : IOrderService
         _mapper = mapper;
         _orderProductRepository = orderProductRepository;
     }
-
-    public async Task<IEnumerable<OrderResponseDto>> GetAllOrdersAsync()
-    {
-        var orders = await _orderRepository.GetAllOrdersAsync();
-        return _mapper.Map<IEnumerable<OrderResponseDto>>(orders);
-    }
-
+    
     public async Task<IEnumerable<OrderResponseDto>> GetAllOrdersWithProductsAsync()
     {
         var orders = await _orderRepository.GetAllOrdersWithProductsAsync();
