@@ -1,6 +1,5 @@
 
 using Application.Dto.UserDto;
-using Application.Interfaces;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +20,7 @@ public class UserController : ControllerBase
     {
         var users = await _service.GetAllUsersWithOrdersAsync();
         if (!users.Any())
-            return NotFound("Users not found");
+            return NotFound("Users with orders not found");
         return Ok(users);
     }
     
@@ -33,16 +32,6 @@ public class UserController : ControllerBase
         if (user == null)
             return NotFound("User not found");
         return Ok(user);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateUser(UserCreationDto user)
-    {
-        var rowsAffected = await _service.CreateUserAsync(user);
-        if (rowsAffected == 1)
-            return Ok("User created successfully");
-        
-        return BadRequest("Unable to create user");
     }
 
     [HttpPut("{id}")]

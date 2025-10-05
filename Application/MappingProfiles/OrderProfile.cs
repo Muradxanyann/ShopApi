@@ -16,8 +16,8 @@ public class OrderProfile : Profile
         CreateMap<ProductOrderEntity, OrderProductsInfo>()
             .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
             .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity))
-            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Product.Name))
-            .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Product.Category))
-            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Product.Price));
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Product!.Name))
+            .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Product!.Category))
+            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Product!.Price));
     }
 }

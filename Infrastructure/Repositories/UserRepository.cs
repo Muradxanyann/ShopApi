@@ -1,9 +1,4 @@
-﻿
-using Application.Dto.OrderDto;
-using Application.Dto.OrderProductsDto;
-
-using Application.Dto.UserDto;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Dapper;
 using Domain;
@@ -21,18 +16,6 @@ public class UserRepository : IUserRepository
         _connectionFactory = connectionFactory;
     }
     
-    public async Task<IEnumerable<UserEntity?>> GetAllUsersAsync()
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        const string sql = """
-                                SELECT user_id, name, age, phone, email FROM users
-                                ORDER BY user_id ASC
-                           """;
-        
-        var users = await connection.QueryAsync<UserEntity>(sql);
-        return users.ToList();
-    }
 
     public async Task<IEnumerable<UserEntity?>> GetAllUsersWithOrdersAsync()
     {
@@ -40,7 +23,7 @@ public class UserRepository : IUserRepository
         connection.Open();
         const string sql = """
 
-                                   SELECT u.user_id, u.name, u.age, u.email,
+                                   SELECT u.user_id, u.name, u.age, u.email, u.username, u.role,
                                           o.order_id, o.created_at,
                                           po.product_id, po.quantity,
                                           p.name, p.category, p.price
@@ -76,7 +59,7 @@ public class UserRepository : IUserRepository
                     currentUser.Orders!.Add(currentOrder);
                 }
                 
-                currentOrder.Items?.Add(productInfo);
+                currentOrder.Items.Add(productInfo);
 
                 return currentUser;
             },
@@ -91,23 +74,13 @@ public class UserRepository : IUserRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
-        var user = await 
-            connection.QueryAsync<UserEntity>("SELECT user_id, name, age, phone, email" + 
-                                         " FROM users WHERE user_id = @id", new { id });
-        return  user.FirstOrDefault();
-    }
-
-    public async Task<int> CreateUserAsync(UserEntity user)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
         const string sql = """
-                               INSERT INTO users (name, age, phone, email)
-                               VALUES (@Name, @Age, @Phone, @Email)
+                               SELECT user_id, name, age, phone, email, username, role
+                               FROM users WHERE user_id = @id
                            """;
-
-        return await connection.ExecuteAsync(sql, user);
-        
+        var user = await 
+            connection.QueryAsync<UserEntity>(sql, new { id });
+        return user.FirstOrDefault();
     }
 
     public async Task<int> UpdateUserAsync(int id, UserEntity user)
