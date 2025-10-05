@@ -1,6 +1,5 @@
 
 using Application.Dto.UserDto;
-using Application.Interfaces;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +20,7 @@ public class UserController : ControllerBase
     {
         var users = await _service.GetAllUsersWithOrdersAsync();
         if (!users.Any())
-            return NotFound("Users not found");
+            return NotFound("Users with orders not found");
         return Ok(users);
     }
     

@@ -12,10 +12,8 @@ public class UserProfile : Profile
         CreateMap<UserEntity, UserResponseDto>().ReverseMap();
         CreateMap<UserEntity, UserUpdateDto>().ReverseMap();
 
-        CreateMap<UserCreationDto, UserEntity>()
-            .ForMember(dest => dest.UserId, opt => opt.Ignore())
-            .ForMember(dest => dest.Orders, opt => opt.Ignore());
-
+       
         CreateMap<UserRegistrationDto, UserEntity>().ReverseMap();
+        CreateMap<UserLoginDto, UserEntity>().ReverseMap();
     }
 }

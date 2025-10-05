@@ -49,7 +49,7 @@ public class OrderRepository :  IOrderRepository
                     orderDictionary.Add(currentOrder.OrderId, currentOrder);
                 }
 
-                if (productOrder != null && productOrder.ProductId != 0)
+                if (productOrder.ProductId != 0)
                 {
                     productOrder.Product = product; 
                     currentOrder.Items.Add(productOrder);
@@ -92,7 +92,7 @@ public class OrderRepository :  IOrderRepository
                     orderDictionary.Add(currentOrder.OrderId, currentOrder);
                 }
 
-                if (productOrder != null && productOrder.ProductId != 0)
+                if (productOrder.ProductId != 0)
                 {
                     productOrder.Product = product; 
                     currentOrder.Items.Add(productOrder);

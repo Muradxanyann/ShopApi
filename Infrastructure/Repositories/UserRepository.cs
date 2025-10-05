@@ -1,9 +1,4 @@
-﻿
-using Application.Dto.OrderDto;
-using Application.Dto.OrderProductsDto;
-
-using Application.Dto.UserDto;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Dapper;
 using Domain;
@@ -64,7 +59,7 @@ public class UserRepository : IUserRepository
                     currentUser.Orders!.Add(currentOrder);
                 }
                 
-                currentOrder.Items?.Add(productInfo);
+                currentOrder.Items.Add(productInfo);
 
                 return currentUser;
             },

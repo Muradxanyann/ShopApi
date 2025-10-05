@@ -1,8 +1,5 @@
-using Application;
 using Application.Dto.OrderDto;
-using Application.Interfaces;
 using Application.Interfaces.Services;
-using Domain;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ShopApi.Controllers;
