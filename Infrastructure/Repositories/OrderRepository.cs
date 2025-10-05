@@ -119,7 +119,7 @@ public class OrderRepository :  IOrderRepository
 
         return await connection.ExecuteScalarAsync<int>(
             sql, 
-            new { order.UserId, order.CreatedAt }, 
+            new { order!.UserId, order.CreatedAt }, 
             transaction
         );
     }

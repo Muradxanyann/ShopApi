@@ -35,16 +35,6 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateUser(UserCreationDto user)
-    {
-        var rowsAffected = await _service.CreateUserAsync(user);
-        if (rowsAffected == 1)
-            return Ok("User created successfully");
-        
-        return BadRequest("Unable to create user");
-    }
-
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(int id, UserUpdateDto user)
     {
