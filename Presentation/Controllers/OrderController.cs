@@ -28,7 +28,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> GetOrderById(int id)
     {
         var order =  await _orderService.GetOrderWithProductsAsync(id);
-        if (order == null)
+        if (order.OrderId == 0)
             return NotFound("Order not found");
         return Ok(order);
     }
@@ -40,4 +40,14 @@ public class OrderController : ControllerBase
         
         return CreatedAtAction(nameof(GetOrderById), new { id = orderId }, new { orderId });
     }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteOrderAsync([FromQuery]int id)
+    {
+        var deleted =  await _orderService.CancelOrderAsync(id);
+        if (!deleted)
+            return NotFound("Order not found");
+        return Ok("Order deleted");
+    }
+    
 }

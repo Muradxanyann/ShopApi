@@ -12,6 +12,6 @@ public class UserEntity
     public int Age { get; set; }   
     public required string Phone { get; set; }
 
-    // Навигационные свойства
+    // Навигационные свойства // 
     public ICollection<OrderEntity>? Orders { get; set; } = new List<OrderEntity>();
 }

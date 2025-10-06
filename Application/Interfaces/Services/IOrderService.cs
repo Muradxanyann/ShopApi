@@ -8,5 +8,5 @@ public interface IOrderService
     
     public Task<OrderResponseDto> GetOrderWithProductsAsync(int id);
     public Task<int> CreateOrderAsync(OrderCreationDto order);
-    public Task<int> CancelOrderAsync(int id);
+    public Task<bool> CancelOrderAsync(int id);
 }

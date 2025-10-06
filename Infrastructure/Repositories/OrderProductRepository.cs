@@ -30,4 +30,11 @@ public class OrderProductRepository : IOrderProductRepository
         }, transaction);
 
     }
+
+    public async Task<int> DeleteOrderProductAsync(int orderId, IDbTransaction transaction = null!)
+    {
+        var connection = _connectionFactory.CreateConnection();
+        const string sql = "DELETE FROM order_products WHERE order_id = @orderId RETURNING order_id;";
+        return await connection.ExecuteScalarAsync<int>(sql, new { orderId }, transaction);
+    }
 }

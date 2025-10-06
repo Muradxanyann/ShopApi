@@ -73,8 +73,27 @@ public class OrderService : IOrderService
             throw;
         }
     }
-    public Task<int> CancelOrderAsync(int id)
+    public async Task<bool> CancelOrderAsync(int id)
     {
-        throw new NotImplementedException();
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+        var transaction = connection.BeginTransaction();
+        try
+        {
+           var deletedOrderProduct = await _orderProductRepository.DeleteOrderProductAsync(id, transaction);
+           if (deletedOrderProduct == 0)
+               return false;
+           
+           var deletedOrder = await _orderRepository.CancelOrderAsync(id, transaction);
+           if (deletedOrder == 0)
+               return false;
+           transaction.Commit();
+           return true;
+        }
+        catch (Exception e)
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 }

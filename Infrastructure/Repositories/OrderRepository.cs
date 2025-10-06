@@ -124,10 +124,10 @@ public class OrderRepository :  IOrderRepository
         );
     }
     
-    public async Task<int> CancelOrderAsync(int id)
+    public async Task<int> CancelOrderAsync(int id , IDbTransaction transaction)
     {
         using var connection = _connectionFactory.CreateConnection();
-        var sql = "DELETE FROM orders WHERE order_id = @Id";
-        return await connection.ExecuteScalarAsync<int>(sql, new { Id = id });
+        var sql = "DELETE FROM orders WHERE order_id = @Id RETURNING order_id;";
+        return await connection.ExecuteScalarAsync<int>(sql, new { Id = id }, transaction);
     }
 }
