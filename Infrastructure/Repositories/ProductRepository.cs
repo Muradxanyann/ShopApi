@@ -13,7 +13,7 @@ public class ProductRepository : IProductRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async  Task<IEnumerable<ProductEntity?>> GetAllProductsAsync()
+    public async  Task<IEnumerable<ProductEntity?>> GetAllProductsAsync(CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = """
@@ -21,33 +21,44 @@ public class ProductRepository : IProductRepository
                   FROM products p
                   ORDER BY p.product_id
                   """;
-        return await connection.QueryAsync<ProductEntity>(sql);
+        var command = new CommandDefinition(sql, cancellationToken : cancellationToken);
+        return await connection.QueryAsync<ProductEntity>(command);
     }
 
-    public async Task<ProductEntity?> GetProductByIdAsync(int id)
+    public async Task<ProductEntity?> GetProductByIdAsync(int id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = """
                   SELECT p.product_id, p.name, p.category, p.price
                   FROM products p
-                  WHERE p.product_id = @Id";"
+                  WHERE p.product_id = @Id
                   ORDER BY p.product_id
                   """;
-        var product = await connection.QueryAsync<ProductEntity>(sql, new { Id = id });
+        var command = new CommandDefinition(
+            sql,
+            new { Id = id },
+            cancellationToken: cancellationToken
+        );
+        var product = await connection.QueryAsync<ProductEntity>(command);
         return product.SingleOrDefault();
     }
 
-    public async Task<int> CreateProductAsync(ProductEntity user)
+    public async Task<int> CreateProductAsync(ProductEntity user,  CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = """
                   INSERT INTO products (name, category, price)
                   VALUES (@Name, @Category, @Price)
                   """;
-        return await connection.ExecuteAsync(sql, user);;
+        var command = new CommandDefinition(
+            sql,
+            user,
+            cancellationToken: cancellationToken
+        );
+        return await connection.ExecuteAsync(command);;
     }
 
-    public async Task<int> UpdateProductAsync(int id, ProductEntity user)
+    public async Task<int> UpdateProductAsync(int id, ProductEntity user,  CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = """
@@ -55,22 +66,32 @@ public class ProductRepository : IProductRepository
                     SET name=@Name, category=@Category, price=@Price
                     WHERE product_id=@Id
                   """;
-        return await connection.ExecuteAsync(sql, new
-        {
-            Id = id,
-            Name = user.Name,
-            Category = user.Category,
-            Price = user.Price
-        });
+        var command = new CommandDefinition(
+            sql,
+            new
+            {
+                Id = id,
+                Name = user.Name,
+                Category = user.Category,
+                Price = user.Price
+            },
+            cancellationToken: cancellationToken
+        );
+        return await connection.ExecuteAsync(command);
     }
 
-    public async Task<int> DeleteProductAsync(int id)
+    public async Task<int> DeleteProductAsync(int id,  CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = """
                   DELETE FROM products p 
                   WHERE p.product_id = @Id
-                  """;                
-        return await connection.ExecuteAsync(sql,  new { Id = id });
+                  """;               
+        var command = new CommandDefinition(
+            sql,
+            new { Id = id },
+            cancellationToken: cancellationToken
+        );
+        return await connection.ExecuteAsync(command);
     }
 }

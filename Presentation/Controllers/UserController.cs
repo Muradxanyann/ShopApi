@@ -16,9 +16,9 @@ public class UserController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetAllUsersWithOrdersAsync()
+    public async Task<IActionResult> GetAllUsersWithOrdersAsync(CancellationToken cancellationToken)
     {
-        var users = await _service.GetAllUsersWithOrdersAsync();
+        var users = await _service.GetAllUsersWithOrdersAsync(cancellationToken);
         if (!users.Any())
             return NotFound("Users with orders not found");
         return Ok(users);
@@ -26,18 +26,18 @@ public class UserController : ControllerBase
     
     
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUserById(int id)
+    public async Task<IActionResult> GetUserById(int id,  CancellationToken cancellationToken)
     {
-        var user = await _service.GetUserByIdAsync(id);
+        var user = await _service.GetUserByIdAsync(id,  cancellationToken);
         if (user == null)
             return NotFound("User not found");
         return Ok(user);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(int id, UserUpdateDto user)
+    public async Task<IActionResult> UpdateUser(int id, UserUpdateDto user,  CancellationToken cancellationToken)
     {
-        var rowsAffected = await _service.UpdateUserAsync(id, user);
+        var rowsAffected = await _service.UpdateUserAsync(id, user,  cancellationToken);
         if (rowsAffected == 1)
             return Ok("User updated  successfully");
         
@@ -45,7 +45,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(int id)
+    public async Task<IActionResult> DeleteUser(int id,  CancellationToken cancellationToken)
     {
         var rowsAffected = await _service.DeleteUserAsync(id);
         if (rowsAffected == 1)

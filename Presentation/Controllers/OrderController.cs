@@ -16,7 +16,7 @@ public class OrderController : ControllerBase
 
     [HttpGet]
     
-    public async Task<IActionResult> GetOrdersWithProductsAsync()
+    public async Task<IActionResult> GetOrdersWithProductsAsync(CancellationToken cancellationToken)
     {
         var orders = await _orderService.GetAllOrdersWithProductsAsync();
         if (!orders.Any())

@@ -22,19 +22,19 @@ public class OrderService : IOrderService
         _orderProductRepository = orderProductRepository;
     }
     
-    public async Task<IEnumerable<OrderResponseDto>> GetAllOrdersWithProductsAsync()
+    public async Task<IEnumerable<OrderResponseDto>> GetAllOrdersWithProductsAsync(CancellationToken cancellationToken)
     {
-        var orders = await _orderRepository.GetAllOrdersWithProductsAsync();
+        var orders = await _orderRepository.GetAllOrdersWithProductsAsync(cancellationToken);
         return _mapper.Map<IEnumerable<OrderResponseDto>>(orders);
     }
 
-    public async Task<OrderResponseDto> GetOrderWithProductsAsync(int id)
+    public async Task<OrderResponseDto> GetOrderWithProductsAsync(int id, CancellationToken cancellationToken)
     {
-        var order = await _orderRepository.GetOrderWithProductsAsync(id);
+        var order = await _orderRepository.GetOrderWithProductsAsync(id,  cancellationToken);
         return _mapper.Map<OrderResponseDto>(order);
     }
 
-    public async Task<int> CreateOrderAsync(OrderCreationDto orderDto)
+    public async Task<int> CreateOrderAsync(OrderCreationDto orderDto, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
@@ -47,7 +47,7 @@ public class OrderService : IOrderService
             orderEntity.CreatedAt = orderDto.OrderDate;
 
             // 2. Вставляем заказ и получаем его Id
-            var orderId = await _orderRepository.InsertOrderAsync(orderEntity, transaction);
+            var orderId = await _orderRepository.InsertOrderAsync(orderEntity, transaction, cancellationToken);
             if (orderId == 0)
                 throw new Exception("Order could not be created");
 
@@ -61,7 +61,7 @@ public class OrderService : IOrderService
                     Quantity = productDto.Quantity
                 };
 
-                await _orderProductRepository.InsertOrderProductAsync(orderProductEntity, transaction);
+                await _orderProductRepository.InsertOrderProductAsync(orderProductEntity, transaction, cancellationToken);
             }
 
             transaction.Commit();
@@ -73,24 +73,24 @@ public class OrderService : IOrderService
             throw;
         }
     }
-    public async Task<bool> CancelOrderAsync(int id)
+    public async Task<bool> CancelOrderAsync(int id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
         var transaction = connection.BeginTransaction();
         try
         {
-           var deletedOrderProduct = await _orderProductRepository.DeleteOrderProductAsync(id, transaction);
+           var deletedOrderProduct = await _orderProductRepository.DeleteOrderProductAsync(id, transaction, cancellationToken);
            if (deletedOrderProduct == 0)
                return false;
            
-           var deletedOrder = await _orderRepository.CancelOrderAsync(id, transaction);
+           var deletedOrder = await _orderRepository.CancelOrderAsync(id, transaction, cancellationToken);
            if (deletedOrder == 0)
                return false;
            transaction.Commit();
            return true;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             transaction.Rollback();
             throw;

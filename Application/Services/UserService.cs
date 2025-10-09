@@ -17,27 +17,27 @@ public class UserService :  IUserService
         _mapper = mapper;
     }
     
-    public async Task<IEnumerable<UserResponseDto?>> GetAllUsersWithOrdersAsync()
+    public async Task<IEnumerable<UserResponseDto?>> GetAllUsersWithOrdersAsync(CancellationToken cancellationToken)
     {
-        var users = await _userRepository.GetAllUsersWithOrdersAsync();
+        var users = await _userRepository.GetAllUsersWithOrdersAsync(cancellationToken);
         var response =  _mapper.Map<IEnumerable<UserResponseDto?>>(users);
         return response;
     }
 
-    public async Task<UserEntity?> GetUserByIdAsync(int id)
+    public async Task<UserEntity?> GetUserByIdAsync(int id, CancellationToken cancellationToken)
     {
-        return await _userRepository.GetUserByIdAsync(id);
+        return await _userRepository.GetUserByIdAsync(id,  cancellationToken);
     }
 
-    public async Task<int> UpdateUserAsync(int id, UserUpdateDto user)
+    public async Task<int> UpdateUserAsync(int id, UserUpdateDto user,  CancellationToken cancellationToken)
     {
         var userEntity = _mapper.Map<UserEntity>(user);
-        return await _userRepository.UpdateUserAsync(id, userEntity);
+        return await _userRepository.UpdateUserAsync(id, userEntity,  cancellationToken);
     }
 
-    public async Task<int> DeleteUserAsync(int id)
+    public async Task<int> DeleteUserAsync(int id,  CancellationToken cancellationToken)
     {
-        return await _userRepository.DeleteUserAsync(id);
+        return await _userRepository.DeleteUserAsync(id, cancellationToken);
     }
     
     

@@ -15,14 +15,15 @@ public class OrderRepository :  IOrderRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IEnumerable<OrderEntity?>> GetAllOrdersAsync()
+    public async Task<IEnumerable<OrderEntity?>> GetAllOrdersAsync(CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = "SELECT order_id, user_id, created_at FROM orders";
-        return await connection.QueryAsync<OrderEntity>(sql);
+        var command = new CommandDefinition(sql,cancellationToken);
+        return await connection.QueryAsync<OrderEntity>(command);
     }
 
-    public async Task<IEnumerable<OrderEntity>> GetAllOrdersWithProductsAsync()
+    public async Task<IEnumerable<OrderEntity>> GetAllOrdersWithProductsAsync(CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
 
@@ -37,9 +38,14 @@ public class OrderRepository :  IOrderRepository
                            """;
 
         var orderDictionary = new Dictionary<int, OrderEntity>();
+        var command = new CommandDefinition(
+            commandText: sql,
+            parameters: null, 
+            cancellationToken: cancellationToken
+        );
 
         var result = await connection.QueryAsync<OrderEntity, ProductOrderEntity, ProductEntity, OrderEntity>(
-            sql,
+            command,
             (order, productOrder, product) =>
             {
                 if (!orderDictionary.TryGetValue(order.OrderId, out var currentOrder))
@@ -63,26 +69,31 @@ public class OrderRepository :  IOrderRepository
         return orderDictionary.Values;
     }
     
-    public async Task<OrderEntity?> GetOrderWithProductsAsync(int id)
+    public async Task<OrderEntity?> GetOrderWithProductsAsync(int id,  CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
 
        
-        var sql = """
-                  SELECT 
-                      o.order_id, o.user_id, o.created_at,
-                      po.order_id, po.product_id, po.quantity,
-                      p.product_id, p.name, p.category, p.price
-                  FROM orders o
-                  LEFT JOIN order_products po ON o.order_id = po.order_id
-                  LEFT JOIN products p ON po.product_id = p.product_id
-                  WHERE o.order_id = @Id
-                  """;
+        const string sql = """
+                           SELECT 
+                               o.order_id, o.user_id, o.created_at,
+                               po.order_id, po.product_id, po.quantity,
+                               p.product_id, p.name, p.category, p.price
+                           FROM orders o
+                           LEFT JOIN order_products po ON o.order_id = po.order_id
+                           LEFT JOIN products p ON po.product_id = p.product_id
+                           WHERE o.order_id = @Id
+                           """;
 
         var orderDictionary = new Dictionary<int, OrderEntity>();
 
+        var command = new CommandDefinition(
+            commandText: sql,
+            parameters: new {Id = id}, 
+            cancellationToken: cancellationToken
+        );
         var result = await connection.QueryAsync<OrderEntity, ProductOrderEntity, ProductEntity, OrderEntity>(
-            sql,
+            command,
             (order, productOrder, product) =>
             {
                 if (!orderDictionary.TryGetValue(order.OrderId, out var currentOrder))
@@ -100,14 +111,14 @@ public class OrderRepository :  IOrderRepository
 
                 return currentOrder;
             },
-            new{Id = id},
+            
             splitOn: "order_id,product_id"
         );
 
         return orderDictionary.Values.FirstOrDefault();
     }
 
-    public async Task<int> InsertOrderAsync(OrderEntity? order, IDbTransaction transaction)
+    public async Task<int> InsertOrderAsync(OrderEntity? order, IDbTransaction transaction,  CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = """
@@ -117,17 +128,25 @@ public class OrderRepository :  IOrderRepository
                                    RETURNING order_id;
                            """;
 
-        return await connection.ExecuteScalarAsync<int>(
-            sql, 
-            new { order!.UserId, order.CreatedAt }, 
-            transaction
+        var command = new CommandDefinition(
+            sql,
+            new { order!.UserId, order.CreatedAt },
+            transaction,
+            cancellationToken: cancellationToken
         );
+        return await connection.ExecuteScalarAsync<int>(command);
     }
     
-    public async Task<int> CancelOrderAsync(int id , IDbTransaction transaction)
+    public async Task<int> CancelOrderAsync(int id , IDbTransaction transaction,   CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = "DELETE FROM orders WHERE order_id = @Id RETURNING order_id;";
-        return await connection.ExecuteScalarAsync<int>(sql, new { Id = id }, transaction);
+        var command = new CommandDefinition(
+            sql,
+            new { Id = id },
+            transaction,
+            cancellationToken: cancellationToken
+        );
+        return await connection.ExecuteScalarAsync<int>(command);
     }
 }

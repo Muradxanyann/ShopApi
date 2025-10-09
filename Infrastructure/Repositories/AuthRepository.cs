@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Dapper;
 using Domain;
 
+
 namespace Infrastructure.Repositories;
 
 public class AuthRepository : IAuthRepository
@@ -14,7 +15,7 @@ public class AuthRepository : IAuthRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<int> CreateUserAsync(UserEntity entity)
+    public async Task<int> CreateUserAsync(UserEntity entity,  CancellationToken cancellationToken = default)
     {
         using var connection = _connectionFactory.CreateConnection();
         var sql = """
@@ -22,10 +23,12 @@ public class AuthRepository : IAuthRepository
                     VALUES (@name, @age, @phone, @email, @username, @passwordHash)
                     RETURNING user_id
                   """;
-        return await connection.ExecuteScalarAsync<int>(sql, entity);
+        
+        var command = new CommandDefinition(sql, entity, cancellationToken: cancellationToken);
+        return await connection.ExecuteScalarAsync<int>(command);
     }
 
-    public async Task<UserEntity?> LoginAsync(UserEntity entity)
+    public async Task<UserEntity?> LoginAsync(UserEntity entity, CancellationToken cancellationToken = default)
     {
         var connection = _connectionFactory.CreateConnection();
         const string sql = """
@@ -33,9 +36,11 @@ public class AuthRepository : IAuthRepository
                              FROM users
                              WHERE username = @username
                            """;
-        return await connection.QueryFirstOrDefaultAsync<UserEntity>(sql, entity);
+        var command = new CommandDefinition(sql, entity, cancellationToken: cancellationToken);
+
+        return await connection.QueryFirstOrDefaultAsync<UserEntity>(command);
     }
-    public async Task SaveRefreshTokenAsync(int userId, string refreshToken)
+    public async Task SaveRefreshTokenAsync(int userId, string refreshToken, CancellationToken cancellationToken = default)
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = """
@@ -47,11 +52,12 @@ public class AuthRepository : IAuthRepository
         {
             UserId = userId,
             Token = refreshToken,
-            ExpiresAt = DateTime.UtcNow.AddDays(7)
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            cancellationToken
         });
     }
 
-    public async Task<int?> ValidateRefreshTokenAsync(string token)
+    public async Task<int?> ValidateRefreshTokenAsync(string token, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
 
@@ -62,7 +68,8 @@ public class AuthRepository : IAuthRepository
                                  AND expires_at > NOW()
                                LIMIT 1
                            """;
+        var command = new CommandDefinition(sql, new { Token = token }, cancellationToken: cancellationToken);
 
-        return await connection.QueryFirstOrDefaultAsync<int?>(sql, new { Token = token });
+        return await connection.QueryFirstOrDefaultAsync<int?>(command);
     }
 }

@@ -26,17 +26,17 @@ public class AuthService :  IAuthService
         _mapper = mapper;
     }
 
-    public async Task<int> CreateUserAsync(UserRegistrationDto dto)
+    public async Task<int> CreateUserAsync(UserRegistrationDto dto, CancellationToken cancellationToken)
     {
         var userEntity = _mapper.Map<UserEntity>(dto);
         userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-        return await _authRepository.CreateUserAsync(userEntity);
+        return await _authRepository.CreateUserAsync(userEntity, cancellationToken);
     }
 
-    public async Task<LoginResponseDto?> LoginAsync(UserLoginDto dto)
+    public async Task<LoginResponseDto?> LoginAsync(UserLoginDto dto,  CancellationToken cancellationToken)
     {
         var toUserEntity = _mapper.Map<UserEntity>(dto);
-        var userEntity = await _authRepository.LoginAsync(toUserEntity);
+        var userEntity = await _authRepository.LoginAsync(toUserEntity, cancellationToken);
         if (userEntity == null)
             return null;
         
@@ -47,7 +47,7 @@ public class AuthService :  IAuthService
         var refreshToken = GenerateRefreshToken();
         
         
-        await SaveRefreshTokenAsync(userEntity.UserId, refreshToken);
+        await SaveRefreshTokenAsync(userEntity.UserId, refreshToken, cancellationToken);
         return new LoginResponseDto
         {
             UserId = userEntity.UserId,
@@ -91,13 +91,13 @@ public class AuthService :  IAuthService
         return Convert.ToBase64String(randomBytes);
     }
 
-    public async Task SaveRefreshTokenAsync(int userId, string refreshToken)
+    public async Task SaveRefreshTokenAsync(int userId, string refreshToken, CancellationToken cancellationToken)
     { 
-        await _authRepository.SaveRefreshTokenAsync(userId, refreshToken);
+        await _authRepository.SaveRefreshTokenAsync(userId, refreshToken,  cancellationToken);
     }
 
-    public Task<int?> ValidateRefreshTokenAsync(string token)
+    public Task<int?> ValidateRefreshTokenAsync(string token,  CancellationToken cancellationToken)
     {
-        return  _authRepository.ValidateRefreshTokenAsync(token);
+        return _authRepository.ValidateRefreshTokenAsync(token,  cancellationToken);
     }
 }
