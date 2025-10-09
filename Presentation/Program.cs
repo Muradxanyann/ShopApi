@@ -10,6 +10,7 @@ using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using ShopApi.Exceptions;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -97,6 +98,7 @@ builder.Services.AddScoped<AdminInitializer>();
 Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var app = builder.Build();
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global exception handler
 
 // ==Admin Seeder==
 using var scope = app.Services.CreateScope();
