@@ -10,6 +10,7 @@ using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using ShopApi.Exceptions;
 
 
@@ -97,8 +98,19 @@ builder.Services.AddScoped<AdminInitializer>();
 // To avoid repeatedly creating aliases
 Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
+// Serilog Settings
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+builder.Host.UseSerilog();
+
 var app = builder.Build();
-app.UseMiddleware<ExceptionHandlingMiddleware>(); // Global exception handler
+
+// Global exception handler
+app.UseMiddleware<ExceptionHandlingMiddleware>(); 
 
 // ==Admin Seeder==
 using var scope = app.Services.CreateScope();
@@ -113,13 +125,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 // ===Middlewares===
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseHttpsRedirection();
 app.MapControllers();
-
 app.Run();

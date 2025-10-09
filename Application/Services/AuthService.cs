@@ -8,6 +8,7 @@ using Application.Interfaces.Services;
 using AutoMapper;
 using Domain;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 
@@ -17,17 +18,21 @@ public class AuthService :  IAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
     private readonly IMapper _mapper;
     
-    public AuthService(IAuthRepository repository, IConfiguration configuration, IMapper mapper)
+    
+    public AuthService(IAuthRepository repository, IConfiguration configuration, ILogger<AuthService> logger, IMapper mapper)
     {
         _authRepository = repository;
         _configuration = configuration;
+        _logger = logger;
         _mapper = mapper;
     }
 
     public async Task<int> CreateUserAsync(UserRegistrationDto dto, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Creating user {username}", dto.Username);
         var userEntity = _mapper.Map<UserEntity>(dto);
         userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
         return await _authRepository.CreateUserAsync(userEntity, cancellationToken);

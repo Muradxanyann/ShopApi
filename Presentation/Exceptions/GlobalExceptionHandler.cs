@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 using System.Net;
 using System.Text.Json;
 
@@ -21,25 +22,31 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
-        catch (NotFoundException ex)
+        catch (DbException ex)
+        {
+            _logger.LogError(ex, "Database error occurred for request {Path}", context.Request.Path);
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            await context.Response.WriteAsJsonAsync(new { error = "Database error" });
+        }
+        catch (NotFoundException)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await context.Response.WriteAsJsonAsync(new { error = "Resource not found" });
         }
-        catch (ValidationException ex)
+        catch (ValidationException)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await context.Response.WriteAsJsonAsync(new { error = "Invalid input" });
         }
-        catch (UnauthorizedException ex)
+        catch (UnauthorizedException)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
         }
-        catch (ForbiddenException ex)
+        catch (ForbiddenException)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await context.Response.WriteAsJsonAsync(new { error = "Forbidden" });
         }
         catch (Exception ex)
         {

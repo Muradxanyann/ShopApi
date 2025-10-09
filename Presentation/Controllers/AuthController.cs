@@ -10,28 +10,41 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService,  IUserService userService)
+    public AuthController(IAuthService authService,  IUserService userService,  ILogger<AuthController> logger)
     {
         _authService = authService;
         _userService = userService;
+        _logger = logger;
     }
+    
 
     [HttpPost("Register")]
     public async Task<IActionResult> CreateUserAsync(UserRegistrationDto dto, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Creating user {username}", dto.Username);
         var userId = await _authService.CreateUserAsync(dto, cancellationToken);
         if (userId == 0)
+        {
+            _logger.LogInformation("User creation failed");
             return BadRequest("Cannot create user");
+        }
+            
         return Ok($"User created successfully: UserId - {userId}");
     }
 
     [HttpPost("Login")]
     public async Task<IActionResult> LoginAsync(UserLoginDto dto,  CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Request to login from user {username}", dto.Username);
         var login = await _authService.LoginAsync(dto, cancellationToken);
         if (login == null)
+        {
+            _logger.LogInformation("Login failed");
             return BadRequest("Invalid login or password");
+        }
+            
         return Ok(login);
     }
     [HttpPost("Refresh")]
