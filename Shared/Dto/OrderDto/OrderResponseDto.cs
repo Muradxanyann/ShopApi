@@ -1,6 +1,7 @@
-using Application.Dto.OrderProductsDto;
 
-namespace Application.Dto.OrderDto;
+using Shared.Dto.OrderProductsDto;
+
+namespace Shared.Dto.OrderDto;
 
 public class OrderResponseDto
 {

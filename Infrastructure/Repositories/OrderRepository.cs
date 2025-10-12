@@ -1,8 +1,12 @@
 using System.Data;
+using System.Text.Json;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Dapper;
 using Domain;
+using Shared;
+using Shared.Dto.OrderDto;
+using Shared.Dto.UserDto;
 
 namespace Infrastructure.Repositories;
  
@@ -22,7 +26,8 @@ public class OrderRepository :  IOrderRepository
         var command = new CommandDefinition(sql,cancellationToken);
         return await connection.QueryAsync<OrderEntity>(command);
     }
-
+    
+    
     public async Task<IEnumerable<OrderEntity>> GetAllOrdersWithProductsAsync(CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();

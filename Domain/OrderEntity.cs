@@ -8,8 +8,6 @@ public class OrderEntity
     
     //Navigational properties
     public int UserId { get; set; }
-    public UserEntity? User { get; set; }
-    
     public ICollection<ProductOrderEntity> Items { get; set; } =  new List<ProductOrderEntity>();
     
 }

@@ -1,4 +1,4 @@
-using Application.Dto.ProductDto;
+using Shared.Dto.ProductDto;
 
 namespace Application.Interfaces.Services;
 
