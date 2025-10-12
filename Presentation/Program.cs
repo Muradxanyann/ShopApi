@@ -6,21 +6,21 @@ using Application.Services;
 using Domain;
 using Infrastructure;
 using Infrastructure.Repositories;
-using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Shared;
 using ShopApi.Exceptions;
 
 
 var builder = WebApplication.CreateBuilder(args);
-// ===Setting Seeder===
-builder.Services.Configure<AdminSettings>(
-    builder.Configuration.GetSection("AdminUser"));
+
+Console.WriteLine($"JWT KEY = [{builder.Configuration["JwtSettings:Key"]}]");
+Console.WriteLine($"JWT ISSUER = [{builder.Configuration["JwtSettings:Issuer"]}]");
+Console.WriteLine($"JWT AUDIENCE = [{builder.Configuration["JwtSettings:Audience"]}]");
 
 // ===JWT Settings===
-
 var jwt = builder.Configuration.GetSection("JwtSettings");
 var secret = jwt["Key"];
 
@@ -52,7 +52,6 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shop API", Version = "v1" });
     
-    
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "Введите JWT токен в формате: Bearer {token}",
@@ -78,21 +77,24 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+
+
 // ==Dependencies==
 builder.Services.AddSingleton<IConnectionFactory, NpgsqlConnectionFactory>();
-builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<IOrderRepository, OrderRepository>();
 builder.Services.AddTransient<IProductRepository, ProductRepository>();
 builder.Services.AddTransient<IOrderProductRepository, OrderProductRepository>();
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<AdminInitializer>();
 
-
-
+// UserClient
+builder.Services.AddHttpClient<UserClient>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:5001");
+    client.DefaultRequestHeaders.Accept.Add(
+        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
 
 
 // To avoid repeatedly creating aliases
@@ -112,10 +114,6 @@ var app = builder.Build();
 // Global exception handler
 app.UseMiddleware<ExceptionHandlingMiddleware>(); 
 
-// ==Admin Seeder==
-using var scope = app.Services.CreateScope();
-var initializer = scope.ServiceProvider.GetRequiredService<AdminInitializer>();
-await initializer.InitializeAsync();
 
 
 app.UseDeveloperExceptionPage();
@@ -133,3 +131,5 @@ app.UseAuthorization();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();
+
+

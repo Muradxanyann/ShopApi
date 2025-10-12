@@ -1,6 +1,10 @@
-using Application.Dto.OrderDto;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared;
+using Shared.Dto.OrderDto;
 
 namespace ShopApi.Controllers;
 [ApiController]
@@ -9,14 +13,17 @@ public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
     private readonly ILogger<OrderController> _logger;
+    private readonly UserClient _client;
     
 
-    public OrderController(IOrderService orderService,  ILogger<OrderController> logger)
+    public OrderController(IOrderService orderService,  ILogger<OrderController> logger,  UserClient client)
     {
         _orderService = orderService;
         _logger = logger;
+        _client = client;
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> GetOrdersWithProductsAsync(CancellationToken cancellationToken)
     {
@@ -30,7 +37,8 @@ public class OrderController : ControllerBase
             
         return Ok(orders);
     }
-
+   
+    [Authorize(Roles = "User,Admin")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOrderById(int id,  CancellationToken cancellationToken)
     {
@@ -45,21 +53,27 @@ public class OrderController : ControllerBase
         return Ok(order);
     }
 
+    [Authorize(Roles = "User")]
     [HttpPost]
     public async Task<IActionResult> CreateOrderAsync(OrderCreationDto order,  CancellationToken cancellationToken)
     {
         _logger.LogInformation("Creating new order");
         var orderId = await _orderService.CreateOrderAsync(order, cancellationToken);
-        if (orderId == 0)
+        switch (orderId)
         {
-            _logger.LogInformation("No order with id {id} found", orderId);
-            return NotFound("Order not found");
+            case 0:
+                _logger.LogInformation("No order with id {id} found", orderId);
+                return NotFound("Order not found");
+            case -1:
+                _logger.LogInformation("No user with id {id} found", order.UserId);
+                return NotFound("User not found");
         }
-        
+
         return CreatedAtAction(nameof(GetOrderById), new { id = orderId }, new { orderId });
     }
 
     [HttpDelete]
+    [Authorize(Roles = "Admin, User")]
     public async Task<IActionResult> DeleteOrderAsync([FromQuery]int id,  CancellationToken cancellationToken)
     {
         _logger.LogInformation("Deleting order with id {id}", id);
@@ -69,7 +83,6 @@ public class OrderController : ControllerBase
             _logger.LogInformation("Cannot delete order");
             return NotFound("Order not found");
         }
-            
         
         return Ok("Order deleted");
     }

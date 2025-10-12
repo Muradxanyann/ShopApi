@@ -1,7 +1,7 @@
-
-using Application.Dto.ProductDto;
 using Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Dto.ProductDto;
 
 namespace ShopApi.Controllers;
 [ApiController]
@@ -16,7 +16,8 @@ public class ProductController : ControllerBase
         _service = service;
         _logger = logger;
     }
-
+    
+    [Authorize(Roles = "User, Admin")]
     [HttpGet]
     public async Task<IActionResult> GetAllProducts(CancellationToken cancellationToken)
     {
@@ -31,6 +32,7 @@ public class ProductController : ControllerBase
         return Ok(products);
     }
     
+    [Authorize(Roles = "User, Admin")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductById(int id,  CancellationToken cancellationToken)
     {
@@ -45,6 +47,7 @@ public class ProductController : ControllerBase
         return Ok(user);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateProduct(ProductCreationDto  product,  CancellationToken cancellationToken)
     {
@@ -57,6 +60,7 @@ public class ProductController : ControllerBase
         return BadRequest("Unable to create product");
     }
 
+    [Authorize(Roles = "Admin")] 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, ProductUpdateDto product,  CancellationToken cancellationToken)
     {
@@ -68,7 +72,8 @@ public class ProductController : ControllerBase
         _logger.LogInformation("Product update failed");
         return BadRequest("Unable to update product");
     }
-
+    
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id,  CancellationToken cancellationToken)
     {
