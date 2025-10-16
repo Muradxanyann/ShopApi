@@ -1,6 +1,6 @@
-using Application.Dto.ProductDto;
 using AutoMapper;
 using Domain;
+using Shared.Dto.ProductDto;
 
 namespace Application.MappingProfiles;
 

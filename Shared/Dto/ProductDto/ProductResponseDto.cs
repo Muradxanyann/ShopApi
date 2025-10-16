@@ -1,4 +1,4 @@
-namespace Application.Dto.ProductDto;
+namespace Shared.Dto.ProductDto;
 
 public class ProductResponseDto
 {

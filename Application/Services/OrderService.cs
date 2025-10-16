@@ -1,9 +1,10 @@
-using Application.Dto.OrderDto;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain;
+using Shared;
+using Shared.Dto.OrderDto;
 
 namespace Application.Services;
 
@@ -13,13 +14,16 @@ public class OrderService : IOrderService
     private readonly IOrderProductRepository _orderProductRepository;
     private readonly IConnectionFactory _connectionFactory;
     private readonly IMapper _mapper;
+    private readonly UserClient  _client;
 
-    public OrderService(IOrderRepository orderRepository, IConnectionFactory factory, IOrderProductRepository orderProductRepository, IMapper mapper)
+    public OrderService(IOrderRepository orderRepository, IConnectionFactory factory, 
+        IOrderProductRepository orderProductRepository, IMapper mapper,  UserClient client)
     {
         _orderRepository = orderRepository;
         _connectionFactory = factory;
         _mapper = mapper;
         _orderProductRepository = orderProductRepository;
+        _client = client;
     }
     
     public async Task<IEnumerable<OrderResponseDto>> GetAllOrdersWithProductsAsync(CancellationToken cancellationToken)
@@ -36,20 +40,27 @@ public class OrderService : IOrderService
 
     public async Task<int> CreateOrderAsync(OrderCreationDto orderDto, CancellationToken cancellationToken)
     {
+        var user =  await  _client.GetUserAsync(orderDto.UserId, cancellationToken);
+        
+        if (user == null)
+        {
+            return -1;
+        }
+        
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
         using var transaction = connection.BeginTransaction();
-
         try
         {
             // 1. Маппим DTO → Entity
             var orderEntity = _mapper.Map<OrderEntity>(orderDto);
-            orderEntity.CreatedAt = orderDto.OrderDate;
+            orderEntity.UserId = user.Id;
 
             // 2. Вставляем заказ и получаем его Id
             var orderId = await _orderRepository.InsertOrderAsync(orderEntity, transaction, cancellationToken);
             if (orderId == 0)
                 throw new Exception("Order could not be created");
+            
 
             // 3. Вставляем продукты заказа
             foreach (var productDto in orderDto.OrderProducts)
@@ -96,4 +107,6 @@ public class OrderService : IOrderService
             throw;
         }
     }
+
+    
 }

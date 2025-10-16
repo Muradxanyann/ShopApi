@@ -1,8 +1,8 @@
-using Application.Dto.ProductDto;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain;
+using Shared.Dto.ProductDto;
 
 namespace Application.Services;
 

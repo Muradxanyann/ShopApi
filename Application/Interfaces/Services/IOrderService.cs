@@ -1,4 +1,4 @@
-using Application.Dto.OrderDto;
+using Shared.Dto.OrderDto;
 
 namespace Application.Interfaces.Services;
 

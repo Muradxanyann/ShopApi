@@ -1,7 +1,7 @@
-using Application.Dto.OrderDto;
-using Application.Dto.OrderProductsDto;
 using AutoMapper;
 using Domain;
+using Shared.Dto.OrderDto;
+using Shared.Dto.OrderProductsDto;
 
 namespace Application.MappingProfiles;
 

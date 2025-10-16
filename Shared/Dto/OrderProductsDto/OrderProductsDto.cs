@@ -1,4 +1,4 @@
-namespace Application.Dto.OrderProductsDto;
+namespace Shared.Dto.OrderProductsDto;
 
 public class OrderProductsInfo
 {
