@@ -17,7 +17,7 @@ public class ProductController : ControllerBase
         _logger = logger;
     }
     
-    [Authorize(Roles = "User, Admin")]
+    
     [HttpGet]
     public async Task<IActionResult> GetAllProducts(CancellationToken cancellationToken)
     {
