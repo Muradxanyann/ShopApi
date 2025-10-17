@@ -16,10 +16,6 @@ using ShopApi.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Console.WriteLine($"JWT KEY = [{builder.Configuration["JwtSettings:Key"]}]");
-Console.WriteLine($"JWT ISSUER = [{builder.Configuration["JwtSettings:Issuer"]}]");
-Console.WriteLine($"JWT AUDIENCE = [{builder.Configuration["JwtSettings:Audience"]}]");
-
 // ===JWT Settings===
 var jwt = builder.Configuration.GetSection("JwtSettings");
 var secret = jwt["Key"];

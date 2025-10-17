@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="AutoMapper" Version="12.0.1" />
       <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+      <PackageReference Include="Docker.DotNet" Version="3.125.15" />
       <PackageReference Include="MinimalApis.Extensions" Version="0.11.0" />
     </ItemGroup>
 
