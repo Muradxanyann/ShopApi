@@ -15,14 +15,18 @@ public class OrderProductRepository : IOrderProductRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<int> InsertOrderProductAsync(ProductOrderEntity entity, IDbTransaction transaction,
-        CancellationToken cancellationToken = default)
+    public async Task<int> InsertOrderProductAsync(
+        ProductOrderEntity entity,
+        IDbTransaction transaction,
+        CancellationToken cancellationToken = default
+        )
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = """
                              INSERT INTO order_products (order_Id, product_Id, quantity)
                              VALUES (@orderId, @productId, @quantity)
                            """;
+        
         var command = new CommandDefinition(
             sql,
             new
@@ -38,7 +42,11 @@ public class OrderProductRepository : IOrderProductRepository
 
     }
 
-    public async Task<int> DeleteOrderProductAsync(int orderId, IDbTransaction transaction, CancellationToken cancellationToken)
+    public async Task<int> DeleteOrderProductAsync(
+        int orderId,
+        IDbTransaction transaction,
+        CancellationToken cancellationToken
+        )
     {
         var connection = _connectionFactory.CreateConnection();
         const string sql = "DELETE FROM order_products WHERE order_id = @orderId RETURNING order_id;";

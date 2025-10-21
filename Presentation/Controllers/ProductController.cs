@@ -82,7 +82,7 @@ public class ProductController : ControllerBase
         if (rowsAffected == 1)
             return Ok("Product deleted  successfully");
         
-        _logger.LogInformation("Product deletion failed");
+        _logger.LogWarning("Product deletion failed");
         return BadRequest("Unable to delete product");
     }
 }

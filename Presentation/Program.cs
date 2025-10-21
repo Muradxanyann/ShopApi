@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Shared;
 using ShopApi.Exceptions;
+using StackExchange.Redis;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -104,6 +105,20 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 builder.Host.UseSerilog();
+
+// Redis
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
+builder.Services.AddSingleton<IDatabase>(sp =>
+{
+    var connection = sp.GetRequiredService<IConnectionMultiplexer>();
+    return connection.GetDatabase();
+});
 
 var app = builder.Build();
 

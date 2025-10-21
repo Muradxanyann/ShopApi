@@ -12,7 +12,9 @@ public class OrderProfile : Profile
         CreateMap<OrderEntity, OrderResponseDto>()
             .ForMember(dest => dest.Products, 
                 opt => opt.MapFrom(src => src.Items));
+        
         CreateMap<OrderCreationDto, OrderEntity>().ReverseMap();
+        
         CreateMap<ProductOrderEntity, OrderProductsInfo>()
             .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
             .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity))
