@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Application.Interfaces.Services;
+using Domain;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
@@ -14,13 +16,18 @@ public class OrderController : ControllerBase
     private readonly IOrderService _orderService;
     private readonly ILogger<OrderController> _logger;
     private readonly UserClient _client;
+    private readonly IPublishEndpoint _publishEndpoint;
     
-
-    public OrderController(IOrderService orderService,  ILogger<OrderController> logger,  UserClient client)
+    public OrderController(
+        IOrderService orderService,
+        ILogger<OrderController> logger,
+        UserClient client,
+        IPublishEndpoint publishEndpoint)
     {
         _orderService = orderService;
         _logger = logger;
         _client = client;
+        _publishEndpoint = publishEndpoint;
     }
 
     [Authorize(Roles = "Admin")]
@@ -69,7 +76,10 @@ public class OrderController : ControllerBase
                 return NotFound("User not found");
         }
 
-        return CreatedAtAction(nameof(GetOrderById), new { id = orderId }, new { orderId });
+        await _publishEndpoint.Publish(
+            new OrderCreatedEvent(orderId, order.OrderProducts.First().ProductId, order.OrderProducts.Count),
+            cancellationToken);
+        return Ok("Order created and published");
     }
 
     [HttpDelete]

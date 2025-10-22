@@ -84,6 +84,7 @@ builder.Services.AddTransient<IOrderProductRepository, OrderProductRepository>()
 
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddMassTransitServices(builder.Configuration);
 
 // UserClient
 builder.Services.AddHttpClient<UserClient>(client =>

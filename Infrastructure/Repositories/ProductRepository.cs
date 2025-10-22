@@ -49,13 +49,14 @@ public class ProductRepository : IProductRepository
         var sql = """
                   INSERT INTO products (name, category, price)
                   VALUES (@Name, @Category, @Price)
+                  RETURNING product_id
                   """;
         var command = new CommandDefinition(
             sql,
             user,
             cancellationToken: cancellationToken
         );
-        return await connection.ExecuteAsync(command);;
+        return await connection.ExecuteScalarAsync<int>(command);
     }
 
     public async Task<int> UpdateProductAsync(int id, ProductEntity user,  CancellationToken cancellationToken)

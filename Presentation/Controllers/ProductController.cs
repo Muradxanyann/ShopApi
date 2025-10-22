@@ -1,4 +1,6 @@
 using Application.Interfaces.Services;
+using Domain;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Dto.ProductDto;
@@ -10,11 +12,14 @@ public class ProductController : ControllerBase
 {
     private readonly IProductService _service;
     private readonly ILogger<ProductController> _logger;
+    private readonly IPublishEndpoint _publishEndpoint;
+
     
-    public ProductController(IProductService service , ILogger<ProductController> logger)
+    public ProductController(IProductService service , ILogger<ProductController> logger,  IPublishEndpoint publishEndpoint)
     {
         _service = service;
         _logger = logger;
+        _publishEndpoint = publishEndpoint;
     }
     
     
@@ -47,17 +52,20 @@ public class ProductController : ControllerBase
         return Ok(user);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "User, Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateProduct(ProductCreationDto  product,  CancellationToken cancellationToken)
     {
         _logger.LogInformation("Creating new product");
-        var rowsAffected = await _service.CreateProductAsync(product, cancellationToken);
-        if (rowsAffected == 1)
-            return Ok("Product created successfully");
-        
-        _logger.LogInformation("Product creation failed");
-        return BadRequest("Unable to create product");
+        var productId  = await _service.CreateProductAsync(product, cancellationToken);
+        if (productId < 1)
+        {
+            _logger.LogInformation("Product creation failed");
+            return BadRequest("Unable to create product");
+        }
+
+        await _publishEndpoint.Publish(new ProductCreatedEvent(productId, product.Name, product.Price), cancellationToken);
+        return Ok($"Product {product.Name} created and published");
     }
 
     [Authorize(Roles = "Admin")] 
@@ -84,5 +92,10 @@ public class ProductController : ControllerBase
         
         _logger.LogWarning("Product deletion failed");
         return BadRequest("Unable to delete product");
+        
+        
     }
+
+    
+
 }
